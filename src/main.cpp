@@ -6,6 +6,8 @@
 
 #define DEVICE_NAME  "Huzzah-1"
 
+#define READS_PER_LOOP 3
+
 #define INFLUXDB_HOST "home-nas.lan"
 #define INFLUXDB_USER "xxx"
 #define INFLUXDB_PASS "xxx"
@@ -54,13 +56,18 @@ void setup() {
 
 // the loop function runs over and over again forever
 void loop() {
-  const double celsius = thermocouple.readCelsius();
-  const double kelvin = thermocouple.readKelvin();
-  const double fahrenheit = thermocouple.readFahrenheit();
+  // Take a few quick measurements and average them
+  double temp = 0.0;
+  for (int i=0; i<READS_PER_LOOP; ++i)
+  {
+    temp += thermocouple.readCelsius();
+    delay(5);
+  }
+  const double celsius = temp / READS_PER_LOOP;
+  const double fahrenheit = (celsius * 1.8) + 32.0;
 
   Serial.print("Temperature: ");
   Serial.print(String(celsius) + " C, ");
-  Serial.print(String(kelvin) + " K, ");
   Serial.println(String(fahrenheit) + " F");
 
   if( digitalRead(16) == HIGH )
@@ -69,7 +76,6 @@ void loop() {
     measurement.addTag("device", DEVICE_NAME);
     measurement.addValue("temp_C", celsius);
     measurement.addValue("temp_F", fahrenheit);
-    measurement.addValue("temp_K", kelvin);
     influx.write(measurement);
   }
 
