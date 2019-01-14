@@ -31,6 +31,11 @@ void setup() {
 
   Serial.println(" ### Hello ###");
 
+  // Jumper across 16-0 to enable sending to Influx
+  pinMode(0, OUTPUT);
+  pinMode(16, INPUT_PULLDOWN_16);
+  digitalWrite(0, HIGH);
+
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   Serial.print("Connecting to WIFI");
   while (WiFi.status() != WL_CONNECTED) {
@@ -58,12 +63,15 @@ void loop() {
   Serial.print(String(kelvin) + " K, ");
   Serial.println(String(fahrenheit) + " F");
 
-  InfluxData measurement("temperature");
-  measurement.addTag("device", DEVICE_NAME);
-  measurement.addValue("temp_C", celsius);
-  measurement.addValue("temp_F", fahrenheit);
-  measurement.addValue("temp_K", kelvin);
-  influx.write(measurement);
+  if( digitalRead(16) == HIGH )
+  {
+    InfluxData measurement("temperature");
+    measurement.addTag("device", DEVICE_NAME);
+    measurement.addValue("temp_C", celsius);
+    measurement.addValue("temp_F", fahrenheit);
+    measurement.addValue("temp_K", kelvin);
+    influx.write(measurement);
+  }
 
-  delay(500);
+  delay(250);
 }
